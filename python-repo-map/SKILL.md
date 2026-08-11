@@ -88,11 +88,33 @@ point, then rerun with `--coverage-json`.
 Do this before proposing any deletion. "Nothing imports it" is not evidence that
 nothing calls it.
 
-### 5. Turn it into a plan
+### 5. Generate the candidate backlog
 
-Read `references/planning.md`. The short version: unwind import-time side effects,
-cut cycles, declare the target layers as an enforced contract, narrow interfaces,
-move files last.
+```bash
+python scripts/plan_scaffold.py /path/to/repo/.repomap
+```
+
+Writes `10-BACKLOG.md`: ranked, dependency-ordered candidate work items with the
+blast radius already computed and the evidence attached to each one. Flags
+`--min-surface` (default 8 names before a module is worth narrowing) and
+`--min-io-categories` (default 3).
+
+This is the artifact that makes the pack actionable. Without it an agent reads the
+evidence and invents priorities; with it, the agent's job is the much more
+reliable one of judging candidates it did not have to find.
+
+Items are candidates, not decisions. Expect to reject some — the scaffold marks
+the ones it suspects are wrong, such as types and exceptions modules whose wide
+surface is entirely normal.
+
+### 6. Turn it into a plan
+
+Read `references/agent-handoff.md` for the prompts that drive an agent from the
+backlog to a merged plan, and `references/planning.md` for the reasoning behind
+the sequencing. The short version: unwind import-time side effects, cut cycles,
+declare the target layers as an enforced contract, narrow interfaces, move files
+last — and re-run the map after each step, because later items routinely become
+unnecessary once earlier ones land.
 
 ## What is in the pack
 
@@ -108,6 +130,7 @@ move files last.
 | `07-git.md` / `.json` | churn x complexity ranking, and co-change pairs with **no** import edge |
 | `08-boundaries.md` / `.json` | I/O touchpoints by category, and import-time side effects |
 | `09-runtime.md` / `.json` | per-entry-point module reach, dead code candidates (needs step 4) |
+| `10-BACKLOG.md` / `10-backlog.json` | ranked candidate work items, phased, with blast radius and blockers |
 
 Three of these do work the obvious tools do not, so lean on them:
 
@@ -169,6 +192,12 @@ the commands to run and offer to interpret the pack when they paste
 - `references/planning.md` — sequencing, cycle-cutting techniques, how to judge an
   interface, and setting up import-linter or tach as a ratchet. Read before writing
   a plan.
+- `references/agent-handoff.md` — the prompts for triaging the backlog, writing the
+  plan, setting up the enforcement ratchet, and executing one step. Read when the
+  task is to produce or drive a refactor plan rather than just a map.
+- `references/example-backlog.md` — a generated `10-BACKLOG.md` from a small
+  example repo, showing the shape of every item kind. Read when you want to know
+  what step 5 produces before running it.
 - `references/optional-tools.md` — `ruff analyze graph`, `grimp`, `tach`,
   `pyreverse`, `pydeps`, `scip-python`, `vulture`, `radon`, `deptry`. Read when the
   stdlib scripts hit a specific limit, or when the user asks for a picture.
